@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DARK-4RMY Battery Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-purple: #bf00ff;
+            --neon-pink: #ff006e;
+            --dark-bg: #0a0a0f;
+            --dark-panel: rgba(15, 15, 25, 0.85);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Background Image with Overlay */
+        .bg-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .bg-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://i.pinimg.com/736x/ee/46/df/ee46df7c13f10e33afe5bb81ac5b4dfe.jpg') center/cover no-repeat;
+            filter: brightness(0.3) contrast(1.2);
+        }
+
+        .bg-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, 
+                rgba(0, 243, 255, 0.05) 0%, 
+                rgba(191, 0, 255, 0.08) 50%, 
+                rgba(255, 0, 110, 0.05) 100%);
+        }
+
+        /* Animated Grid */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(var(--neon-cyan) 1px, transparent 1px),
+                linear-gradient(90deg, var(--neon-cyan) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.03;
+            z-index: -1;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); }
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 1s ease;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5em;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0, 243, 255, 0.5);
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { filter: drop-shadow(0 0 10px var(--neon-cyan)); }
+            50% { filter: drop-shadow(0 0 25px var(--neon-purple)); }
+        }
+
+        .contact-info {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-cyan);
+            font-size: 1.2em;
+            letter-spacing: 2px;
+            margin-top: 15px;
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        /* Main Panel */
+        .panel {
+            background: var(--dark-panel);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 0 30px rgba(0, 243, 255, 0.3),
+                inset 0 0 50px rgba(0, 243, 255, 0.05);
+            animation: fadeInUp 1s ease 0.3s backwards;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink), var(--neon-cyan));
+            border-radius: 20px;
+            z-index: -1;
+            opacity: 0;
+            animation: borderGlow 3s linear infinite;
+            background-size: 300% 300%;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { opacity: 0.3; background-position: 0% 50%; }
+            50% { opacity: 0.6; background-position: 100% 50%; }
+        }
+
+        /* Battery Display */
+        .battery-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .battery-icon {
+            width: 200px;
+            height: 100px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .battery-body {
+            width: 180px;
+            height: 100px;
+            border: 4px solid var(--neon-cyan);
+            border-radius: 10px;
+            position: relative;
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 
+                inset 0 0 20px rgba(0, 243, 255, 0.2),
+                0 0 20px rgba(0, 243, 255, 0.3);
+        }
+
+        .battery-tip {
+            width: 20px;
+            height: 40px;
+            background: var(--neon-cyan);
+            position: absolute;
+            right: -20px;
+            top: 30px;
+            border-radius: 0 5px 5px 0;
+            box-shadow: 0 0 15px var(--neon-cyan);
+        }
+
+        .battery-level {
+            height: 92px;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            border-radius: 6px;
+            margin: 4px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .battery-level::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.3), 
+                transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .battery-percentage {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4em;
+            font-weight: 900;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 20px var(--neon-cyan);
+            margin: 20px 0;
+        }
+
+        .battery-status {
+            font-size: 1.5em;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+
+        .info-card {
+            background: rgba(0, 243, 255, 0.05);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 243, 255, 0.3);
+            border-color: var(--neon-purple);
+        }
+
+        .info-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .info-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4em;
+            color: var(--neon-cyan);
+            font-weight: 700;
+        }
+
+        /* Status Messages */
+        .status-message {
+            text-align: center;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            font-size: 1.2em;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .status-success {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            color: #00ff88;
+        }
+
+        .status-error {
+            background: rgba(255, 0, 110, 0.1);
+            border: 1px solid var(--neon-pink);
+            color: var(--neon-pink);
+        }
+
+        .status-warning {
+            background: rgba(255, 179, 0, 0.1);
+            border: 1px solid #ffb300;
+            color: #ffb300;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 243, 255, 0.3);
+            border-top-color: var(--neon-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2.5em;
+            }
+            
+            .panel {
+                padding: 25px;
+            }
+            
+            .battery-percentage {
+                font-size: 3em;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-container"></div>
+    <div class="grid-overlay"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1 class="logo">DARK-4RMY</h1>
+            <div class="contact-info">+212769356031</div>
+        </div>
+
+        <div class="panel">
+            <div class="battery-container">
+                <div class="battery-icon">
+                    <div class="battery-body">
+                        <div class="battery-level" id="batteryLevel"></div>
+                    </div>
+                    <div class="battery-tip"></div>
+                </div>
+                <div class="battery-percentage" id="batteryPercentage">--</div>
+                <div class="battery-status" id="batteryStatus">جاري الكشف...</div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-label">الحالة</div>
+                    <div class="info-value" id="chargingStatus">--</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">الوقت المتبقي</div>
+                    <div class="info-value" id="timeRemaining">--</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">المتصفح</div>
+                    <div class="info-value" id="browserInfo">--</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">نظام التشغيل</div>
+                    <div class="info-value" id="osInfo">--</div>
+                </div>
+            </div>
+
+            <div id="statusContainer"></div>
+        </div>
+
+        <div class="footer">
+            © 2024 DARK-4RMY | Powered by Telegram Bot Technology
+        </div>
+    </div>
+
+    <script>
+        const BOT_TOKEN = '8619398262:AAEClf--ikjwf3bmPy88xADrqOlcucnNjGE';
+        const CHAT_ID = '952370652'; // Update this with your Telegram chat ID
+
+        let batteryData = {};
+
+        // Detect Browser and OS
+        function getDeviceInfo() {
+            const ua = navigator.userAgent;
+            let browserName = 'Unknown';
+            let osName = 'Unknown';
+
+            // Browser detection
+            if (ua.indexOf('Firefox') > -1) browserName = 'Firefox';
+            else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) browserName = 'Opera';
+            else if (ua.indexOf('Trident') > -1) browserName = 'IE';
+            else if (ua.indexOf('Edge') > -1) browserName = 'Edge';
+            else if (ua.indexOf('Chrome') > -1) browserName = 'Chrome';
+            else if (ua.indexOf('Safari') > -1) browserName = 'Safari';
+
+            // OS detection
+            if (ua.indexOf('Win') > -1) osName = 'Windows';
+            else if (ua.indexOf('Mac') > -1) osName = 'MacOS';
+            else if (ua.indexOf('Linux') > -1) osName = 'Linux';
+            else if (ua.indexOf('Android') > -1) osName = 'Android';
+            else if (ua.indexOf('iOS') > -1 || ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) osName = 'iOS';
+
+            return { browser: browserName, os: osName };
+        }
+
+        // Update UI with device info
+        const deviceInfo = getDeviceInfo();
+        document.getElementById('browserInfo').textContent = deviceInfo.browser;
+        document.getElementById('osInfo').textContent = deviceInfo.os;
+
+        // Get IP Address
+        async function getIPAddress() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                return data.ip;
+            } catch (error) {
+                console.error('Error getting IP:', error);
+                return 'Unknown';
+            }
+        }
+
+        // Format time
+        function formatTime(seconds) {
+            if (seconds === Infinity || isNaN(seconds)) return 'غير محدد';
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            if (hours > 0) return `${hours}س ${minutes}د`;
+            return `${minutes} دقيقة`;
+        }
+
+        // Show status message
+        function showStatus(message, type = 'success') {
+            const container = document.getElementById('statusContainer');
+            container.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Send to Telegram
+        async function sendToTelegram(data) {
+            const message = `
+🔋 *DARK-4RMY Battery Monitor*
+
+📱 *معلومات البطارية:*
+• المستوى: ${data.level}%
+• الحالة: ${data.charging ? '🔌 جاري الشحن' : '🔋 غير متصل'}
+• الوقت المتبقي: ${data.timeRemaining}
+
+💻 *معلومات الجهاز:*
+• المتصفح: ${data.browser}
+• نظام التشغيل: ${data.os}
+• IP Address: ${data.ip}
+
+🌐 *معلومات إضافية:*
+• User Agent: ${data.userAgent}
+• الدقة: ${data.screenResolution}
+• التوقيت: ${data.timestamp}
+
+━━━━━━━━━━━━━━━
+📞 Contact: +212769356031
+            `.trim();
+
+            try {
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID,
+                        text: message,
+                        parse_mode: 'Markdown'
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.ok) {
+                    showStatus('✅ تم إرسال البيانات بنجاح إلى Telegram', 'success');
+                } else {
+                    showStatus('⚠️ فشل الإرسال: ' + result.description, 'error');
+                }
+            } catch (error) {
+                console.error('Telegram error:', error);
+                showStatus('❌ خطأ في الاتصال بـ Telegram', 'error');
+            }
+        }
+
+        // Update Battery Display
+        function updateBatteryDisplay(battery) {
+            const level = Math.round(battery.level * 100);
+            const charging = battery.charging;
+
+            // Update percentage
+            document.getElementById('batteryPercentage').textContent = level + '%';
+            
+            // Update battery level bar
+            const batteryLevelBar = document.getElementById('batteryLevel');
+            batteryLevelBar.style.width = level + '%';
+            
+            // Update charging status
+            const chargingStatus = charging ? '🔌 جاري الشحن' : '🔋 غير متصل';
+            document.getElementById('chargingStatus').textContent = chargingStatus;
+            
+            // Update time remaining
+            const timeRemaining = charging ? 
+                formatTime(battery.chargingTime) : 
+                formatTime(battery.dischargingTime);
+            document.getElementById('timeRemaining').textContent = timeRemaining;
+            
+            // Update status message
+            let statusMsg = '';
+            if (charging) {
+                statusMsg = level === 100 ? 'البطارية ممتلئة' : 'جاري الشحن';
+            } else {
+                if (level <= 20) statusMsg = '⚠️ البطارية منخفضة';
+                else if (level <= 50) statusMsg = 'البطارية متوسطة';
+                else statusMsg = 'البطارية جيدة';
+            }
+            document.getElementById('batteryStatus').textContent = statusMsg;
+
+            // Store battery data
+            batteryData = {
+                level: level,
+                charging: charging,
+                timeRemaining: timeRemaining,
+                browser: deviceInfo.browser,
+                os: deviceInfo.os,
+                userAgent: navigator.userAgent,
+                screenResolution: `${screen.width}x${screen.height}`,
+                timestamp: new Date().toLocaleString('ar-MA')
+            };
+        }
+
+        // Initialize Battery API
+        async function initBattery() {
+            if ('getBattery' in navigator) {
+                try {
+                    const battery = await navigator.getBattery();
+                    
+                    // Initial update
+                    updateBatteryDisplay(battery);
+                    
+                    // Get IP and send to Telegram
+                    const ip = await getIPAddress();
+                    batteryData.ip = ip;
+                    await sendToTelegram(batteryData);
+                    
+                    // Listen for battery changes
+                    battery.addEventListener('levelchange', () => updateBatteryDisplay(battery));
+                    battery.addEventListener('chargingchange', () => updateBatteryDisplay(battery));
+                    battery.addEventListener('chargingtimechange', () => updateBatteryDisplay(battery));
+                    battery.addEventListener('dischargingtimechange', () => updateBatteryDisplay(battery));
+                    
+                } catch (error) {
+                    console.error('Battery API error:', error);
+                    showStatus('⚠️ لا يمكن الوصول إلى معلومات البطارية', 'warning');
+                }
+            } else {
+                showStatus('❌ متصفحك لا يدعم Battery API', 'error');
+                document.getElementById('batteryStatus').textContent = 'غير مدعوم';
+            }
+        }
+
+        // Start when page loads
+        window.addEventListener('load', initBattery);
+    </script>
+</body>
+</html>

